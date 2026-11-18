@@ -252,4 +252,4 @@ build/
 
 ## Credits
 
-Inspired by [privateGPT](https://github.com/imartinez/privateGPT) and [Ollama](https://ollama.com), and by the Python PersonalGPT project from the *Generative AI for DevOps and DevSecOps Engineers* course by ASecurityGuru. This repository is an independent Java / Spring AI re-implementation focused on CSV log analysis.
+Inspired by [privateGPT](https://github.com/asecurityguru/genai-personalgpt-devops-devsecops-repo.git) and [Ollama](https://ollama.com), and by the Python PersonalGPT project from the *Generative AI for DevOps and DevSecOps Engineers* course by ASecurityGuru. This repository is an independent Java / Spring AI re-implementation focused on CSV log analysis.
