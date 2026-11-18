@@ -1,0 +1,98 @@
+spring:
+  application:
+    name: personal-gpt
+  threads:
+    virtual:
+      enabled: true                      # needs Java 21 (you're on Corretto 21)
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+
+  # Local LLMs on CPU are slow, so raise the HTTP timeouts
+  http:
+    clients:
+      connect-timeout: 5s
+      read-timeout: 300s
+
+  ai:
+    model:
+      chat: ollama
+      embedding: ollama
+    ollama:
+      base-url: ${OLLAMA_URL:http://localhost:11434}
+      init:
+        pull-model-strategy: when_missing    # auto-pulls missing models on startup
+        timeout: 20m                         # first pull of mistral is a few GB
+      chat:
+        temperature: 0.2
+        model: ${MODEL:mistral}
+      embedding:
+        model: ${EMBEDDING_MODEL:nomic-embed-text}
+    vectorstore:
+      chroma:
+        initialize-schema: false
+        tenant-name: default_tenant
+        database-name: default_database
+        collection-name: devops-logs
+        client:
+          host: ${CHROMA_HOST:http://localhost}
+          port: ${CHROMA_PORT:8000}
+
+personalgpt:
+  source-directory: ${SOURCE_DIRECTORY:input_documents}
+  target-source-chunks: ${TARGET_SOURCE_CHUNKS:4}
+  max-body-chars: 1200                       # cap per log row
+  max-stack-frames: 3                        # keep only the first N "at ..." frames
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true                        # /actuator/health/liveness + readiness for K8s
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+server:
+  shutdown: graceful
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  ai:
+    ollama:
+      base-url: http://ollama:11434          # docker-compose service names
+    vectorstore:
+      chroma:
+        client:
+          host: http://chroma
+          port: 8000
+personalgpt:
+  source-directory: /data/input_documents
+
+---
+spring:
+  config:
+    activate:
+      on-profile: k8s
+  ai:
+    ollama:
+      base-url: http://ollama.ai.svc.cluster.local:11434
+    vectorstore:
+      chroma:
+        client:
+          host: http://chroma.ai.svc.cluster.local
+          port: 8000
+personalgpt:
+  source-directory: /data/input_documents
+logging:
+  structured:
+    format:
+      console: ecs                           # JSON logs
